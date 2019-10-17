@@ -9,16 +9,18 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Arboles de decision
 
-
+### Limpiamos memoria
 ```{r}
 rm(list=ls())
 ```
-
+### cargamos librerias necesarias
 ```{r}
 library(dplyr)
 library(ggplot2)
 library(caret)
+#implementación de arboles de decision
 library(rpart)
+#libería para imprimir un arbol de decision
 library(rpart.plot)
 library(tidyverse)
 ```
@@ -33,7 +35,7 @@ colnames(training) <- c("age", "workclass", "final_weight", "education",
                            "capital_loss", "hours_per_week", "native_country",
                            "salario")
 
-testing <- read.csv("data/adult_train.csv")
+testing <- read.csv("data/adult_test.csv")
 
 colnames(testing) <- c("age", "workclass", "final_weight", "education",
                            "education_number", "marital_status", "occupation",

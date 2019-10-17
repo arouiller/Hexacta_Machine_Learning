@@ -16,25 +16,23 @@ rm(list = ls())
 ```{r}
 m<- matrix(
     c(
-      1, 2, 3, 4, 5, 0 ,
-      3, 4, 2, 1, 4, -5 ,
-      5, 4, 3, 2, 0, -1,
-      0, 0, 5, -4, 3, 0,
-      5, 5, 4, 4, 0, 0, 
-      -5, 4, 0, 4, 5, 0,
-      0, 3, -1, 0, 0, 0
+      4, 0, 0, 0, 0, -5,
+      4, 1, 4, 0, 3, 5 ,
+      5, 3, 2, 2, 3, 0,
+      5, 4, 4, 2, 3, 0,
+      0, 2, 5, 2, 5, -5, 
+      3, 4, 5, 0, 3, 4
       ), 
     byrow = T, 
     ncol=6, 
     dimnames = list(
       c(
         'Alejandro', 
-        'Mariano', 
-        'Matias',
-        'Andres',
-        'Jose',
-        'Pedro',
-        'Roberto'
+        'Bernardita', 
+        'Christian',
+        'Alejandro2',
+        'Laura',
+        'Emanuel'
       ), c(
         'Banana', 
         'Pera', 
@@ -48,12 +46,12 @@ m
 ```
 
 ```{r}
-sort(m[c('Roberto'), ], decreasing = T)
+sort(m[c('Alejandro'), ], decreasing = T)
 ```
 
 
 ```{r}
-item_nro <- 'Banana'
+item_nro <- 'Kiwi'
 
 (item_index <- which(colnames(m) ==  item_nro))
 
@@ -64,5 +62,24 @@ cos_sims <- apply(m, 2,
                       cosine_sim(m[,item_index], y))
 
 sort(cos_sims, decreasing = T)
+```
+
+```{r}
+n <- t(m)
+n
+```
+```{r}
+item_nro <- 'Christian'
+
+(item_index <- which(colnames(n) ==  item_nro))
+
+cosine_sim <- function(a, b) crossprod(a,b)/sqrt(crossprod(a)*crossprod(b))
+
+cos_sims <- apply(n, 2,
+                    FUN = function(y) 
+                      cosine_sim(n[,item_index], y))
+
+sort(cos_sims, decreasing = T)
+```
 ```
 

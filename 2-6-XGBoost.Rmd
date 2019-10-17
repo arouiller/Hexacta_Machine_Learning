@@ -74,13 +74,13 @@ testing_dummies <- fastDummies::dummy_cols(testing, select_columns = categorical
 
 training_dummies <- training_dummies %>%
   mutate(
-    salario_bin = ifelse(salario == '<=50K', 1, 0)
+    salario_bin = ifelse(salario == '<=50K', 0, 1)
   )%>%
   select(-c(salario))
 
 testing_dummies <- testing_dummies %>%
   mutate(
-    salario_bin = ifelse(salario == '<=50K', 1, 0)
+    salario_bin = ifelse(salario == '<=50K', 0, 1)
   )%>%
   select(-c(salario))
 ```
@@ -139,7 +139,7 @@ colnames(xgb.pred) <- c('class_1', 'class_0')
 ```{r}
 xgb.pred <- xgb.pred %>%
   mutate(
-    class = ifelse(class_0 > 0.5, 1, 0)
+    class = ifelse(class_0 > 0.5, 0, 1)
   )
 
 

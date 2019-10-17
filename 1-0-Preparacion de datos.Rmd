@@ -7,48 +7,72 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+### Limpieza de memoria
 ```{r}
 rm(list= ls())
 ```
 
-
+### Librerías a utilizar
 ```{r}
 library(tidyverse)
 ```
 
 ## Limpieza de datos
 
-### Asignacion de nombres a columnas
+### Lectura de datos
 ```{r}
 # Datos de train.
 datos_train <- read_csv(file = "data/adult_.data", col_names = FALSE)
+
+# Datos de test.
+datos_test <- read_csv(file = "data/adult_.test", col_names = FALSE, skip = 1)
+
+```
+
+
+### Asignacion de nombres a columnas
+```{r}
 colnames(datos_train) <- c("age", "workclass", "final_weight", "education",
                            "education_number", "marital_status", "occupation",
                            "relationship", "race", "sex", "capital_gain",
                            "capital_loss", "hours_per_week", "native_country",
                            "salario")
 
-# Datos de test.
-datos_test <- read_csv(file = "data/adult_.test", col_names = FALSE, skip = 1)
+
 colnames(datos_test) <- c("age", "workclass", "final_weight", "education",
                            "education_number", "marital_status", "occupation",
                            "relationship", "race", "sex", "capital_gain",
                            "capital_loss", "hours_per_week", "native_country",
                            "salario")
+```
 
-# Se combinan los dos conjuntos de datos.
+### Combinamos datos de train y test
+Combinamos en un solo dataset los datos de training y los de testing, posteriormente se generarán dos nuevos conjuntos de train y test.
+```{r}
 datos <- bind_rows(datos_train, datos_test)
+```
 
-# Se eliminan registros con missing values, que en este set de datos están 
-# codificados como ?.
+
+
+### Manipulacion de valores no regisrados
+En el dataset, los valores no registrados tienen asignado el valor ?
+```{r}
 remplazar <- function(x){
   x[x == "?"] <- NA
   return(x)
 }
 datos <- datos %>% map_df(.f = remplazar)
-datos <- drop_na(datos)
+```
 
-# Recodificación de niveles.
+Eliminamos del dataset cualquier registro que tenga en alguna de sus columnas un valor NA
+```{r}
+datos <- drop_na(datos)
+```
+
+### Recodificación de valores
+
+El dataset se encuentra en inglés, por lo tanto vamos a reemplazar algunos de los valores por su traducción en español.
+```{r}
 datos <- datos %>% mutate(workclass = recode(datos$workclass,
                                              "Without-pay" = "desempleado",
                                              "Self-emp-inc" = "autonomo",
@@ -71,7 +95,11 @@ datos <- datos %>% mutate(sex = recode(datos$sex,
                                              "Male"    = "Masculino",
                                              "Female"   = "Femenino")
                           )
+```
 
+El dataset tiene registrado el país de origen, mas no el contienente.
+Aqui se asigna el continente en base al país
+```{r}
 norte_america <- c("Canada", "Cuba", "Dominican-Republic", "El-Salvador",
                    "Guatemala", "Haiti", "Honduras", "Jamaica", "Mexico",
                    "Nicaragua", "Outlying-US(Guam-USVI-etc)", "Puerto-Rico",
@@ -92,8 +120,10 @@ datos <- datos %>% mutate(native_country = case_when(
                           native_country %in% otros         ~ "Otros",
                           TRUE ~ as.character(native_country)
                 ))
+```
 
-
+Realizamos un mapeo de los grados de educación
+```{r}
 primaria     <- c("Preschool", "1st-4th", "5th-6th", "7th-8th", "9th", "10th",
                   "11th","12th")
 bachillerato <- c("Some-college", "Assoc-acdm", "Assoc-voc")
@@ -108,34 +138,45 @@ datos <- datos %>% mutate(education = case_when(
                           education == "Doctorate"     ~ "doctorado",
                           TRUE ~ as.character(education)
                 ))
+```
 
+
+Realizamos un mapeo del salario que perciben
+```{r}
 datos <- datos %>% mutate(salario = case_when(
                           salario == "<=50K."      ~ "<=50K",
                           salario == ">50K."       ~ ">50K",
                           TRUE ~ as.character(salario)
                 ))
+```
 
-# Se agrupan las observaciones cuya variable occupation == "Armed-Forces" con 
-# "Other-service" ya que solo hay 14 observaciones (0.03% del total).
+Se agrupan las observaciones cuya variable occupation == "Armed-Forces" con "Other-service" ya que solo hay 14 observaciones (0.03% del total).
+```{r}
 datos <- datos %>% mutate(occupation = case_when(
                           occupation == "Armed-Forces" ~ "Other-service",
                           TRUE ~ as.character(occupation)
                          ))
-write_csv(x = datos, path = "data/adult_custom.csv", col_names = TRUE)
 ```
+
+### Training y testing
 ```{r}
-#If you do not have an ID per row, use the following code to create an ID
-datos <- datos %>% mutate(id = row_number())
-#Check IDs
+# generamos un id por fila
+datos$id <- dplyr::row_number(datos$age)
+
 head(datos$id)
-#Create training set
+#Generamos el set de training
 train <- datos %>% sample_frac(.70)
-#Create test set
+
+#GEneramos el set de testing
 test  <- anti_join(datos, train, by = 'id')
 
+```
 
 
+### Escritura de los datos a archivo
+
+```{r}
+write_csv(x = datos%>%selectI(-c("id")), path = "data/adult_custom.csv", col_names = TRUE)
 write_csv(x = train%>%select(-c("id")), path = "data/adult_train.csv", col_names = TRUE)
 write_csv(x = test%>%select(-c("id")), path = "data/adult_test.csv", col_names = TRUE)
 ```
-

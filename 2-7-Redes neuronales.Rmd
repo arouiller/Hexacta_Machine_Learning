@@ -19,6 +19,9 @@ rm(list=ls())
 #library(keras)
 #install_keras()
 library(keras)
+library(fastDummies)
+library(dplyr)
+library(caret)
 ```
 
 ### Cargo los datos de training y testing
@@ -84,10 +87,10 @@ test_data <- scale(test_data, center = col_means_train, scale = col_stddevs_trai
 ```
 
 ```{r}
-train_labels <- to_categorical(ifelse(training_dummies$salario == '<=50K', 1, 0))
+train_labels <- to_categorical(ifelse(training_dummies$salario == '<=50K', 0, 1))
 train_labels[1:10] # Display first 10 entries
 
-test_labels <- ifelse(testing_dummies$salario == '<=50K', 1, 0)
+test_labels <- ifelse(testing_dummies$salario == '<=50K', 0, 1)
 test_labels[1:10]
 ```
 
@@ -122,10 +125,6 @@ history <- model %>% fit(
   batch_size = 5,
   validation_split = 0.3
 )
-```
-
-```{r}
-plot_(model)
 ```
 
 

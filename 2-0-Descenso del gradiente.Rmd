@@ -6,7 +6,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-
+### Limpiamos la memoria
 ```{r}
 rm(list=ls())
 ```
@@ -14,9 +14,10 @@ rm(list=ls())
 
 ## Descenso del gradiente
 
+Este ejemplo está basado en:
 http://ethen8181.github.io/machine-learning/linear_regression/linear_regession.html
 
-### Librerias
+### Librerias a utilizar
 ```{r}
 library(grid)
 library(dplyr)
@@ -25,6 +26,7 @@ library(ggplot2)
 ```
 
 ### Parabola
+Esta funcion es la función de costo que, posteriormente, intentaremos minimizar<
 ```{r}
 Formula <- function(x) 1.2 * (x-2)^2 + 3.2
 ```
@@ -35,19 +37,19 @@ Se ve la forma de la parábola y la solución óptima
 ```{r}
 ggplot( data.frame( x = c(0, 4) ), aes(x) ) + 
   stat_function(fun = Formula) + 
-  geom_point( data = data.frame( x = 2, y = Formula(2) ), aes(x, y),  color = "blue", size = 3 ) + 
+  geom_point( data = data.frame( x = 2, y = Formula(2) ), aes(x, y),  color = "red", size = 3 ) + 
   ggtitle( expression( 1.2 * (x-2)^2 + 3.2 ) )
 ```
 
 
 ### Funcion deriavada
+Derivada de la función de costo
 ```{r}
 #Derivada de la funcion
 derivada <- function(x) 2 * 1.2 * (x-2) 
 ```
 
-
-
+### Descenso del gradiente
 ```{r}
 decenso_gradiente <- function(learning_rate = 0.5){
   # generamos una lista para guardar los pares x, y
@@ -100,7 +102,14 @@ decenso_gradiente <- function(learning_rate = 0.5){
   # visualize the gradient descent's value 
   ggplot( data.frame( x = c(0, 4) ), aes(x) ) + 
   stat_function(fun = Formula) + 
-  ggtitle( expression( 1.2 * (x-2)^2 + 3.2 ) ) + 
+  ggtitle( 
+    paste(
+      'Iteraciones: ', step, 
+      'learning rate: ',learning_rate ,
+      ' x: ', format(round(x_new, 3), nsmall=3), 
+      ' y: ', format(Formula(x_new), nsmall=3)
+    )
+  )+ 
   geom_segment( data = segment , aes(x = x, y = y, xend = xend, yend = yend), 
                 color = "blue", alpha = .8, arrow = arrow( length = unit(0.25, "cm") ) )+
   geom_point( data = data.frame( x = 2, y = Formula(2) ), aes(x, y),  color = "blue", size = 3 )+
@@ -108,23 +117,28 @@ decenso_gradiente <- function(learning_rate = 0.5){
 }
 ```
 
+### Tasa de aprendizaje 0.25
 ```{r}
 decenso_gradiente(learning_rate = 0.25)
+
 ```
 
+### Tasa de aprendizaje mayor
 ```{r}
 decenso_gradiente(learning_rate = 0.4)
 ```
-
 ```{r}
 decenso_gradiente(learning_rate = 0.5)
 ```
 
+### Tasa de aprendizaje muy pequeña
+```{r}
+decenso_gradiente(learning_rate = 0.025)
+```
+### Tasa de aprendizaje muy grande
 ```{r}
 decenso_gradiente(learning_rate = 0.85)
 ```
 
-```{r}
-decenso_gradiente(learning_rate = 0.025)
-```
+
 

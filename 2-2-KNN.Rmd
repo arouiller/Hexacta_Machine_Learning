@@ -25,35 +25,46 @@ library(class)
 
 ### Cargo los datos de training y testing
 
+Leo los datos desde archivo
 ```{r}
 training <- read.csv("data/adult_train.csv", stringsAsFactors = TRUE)
+testing <- read.csv("data/adult_test.csv")
+```
+
+Cambio los nombres de las columnas
+```{r}
 colnames(training) <- c("age", "workclass", "final_weight", "education",
                            "education_number", "marital_status", "occupation",
                            "relationship", "race", "sex", "capital_gain",
                            "capital_loss", "hours_per_week", "native_country",
                            "salario")
 
-training_dummies <- fastDummies::dummy_cols(training)%>%
-  select(-c(
-    "workclass",
-    "education",
-    "marital_status",
-    "occupation",
-    "relationship",
-    "race",
-    "sex",
-    "native_country"
-  ))
-
-testing <- read.csv("data/adult_train.csv")
-
 colnames(testing) <- c("age", "workclass", "final_weight", "education",
                            "education_number", "marital_status", "occupation",
                            "relationship", "race", "sex", "capital_gain",
                            "capital_loss", "hours_per_week", "native_country",
                            "salario")
-testing_dummies <- fastDummies::dummy_cols(testing)%>%
-  select(-c(
+```
+
+Genero dos vectores, uno para mantener las etiquetas de los datos de training y otro para los de testing
+```{r}
+train_labels <- training %>% 
+  select(salario)%>%
+  mutate(salario=factor(salario))
+train_labels <- train_labels$salario
+
+test_labels  <- testing %>% 
+  select(salario)%>%
+  mutate(salario=factor(salario))
+test_labels <- test_labels$salario
+
+```
+
+
+El algorimo no funciona con datos categoricos, por lo que debo generar columnas dummies (representación 0-1).
+Posteriormente elimino las columnas categoricas y la columna que corresponde a la clase (salario)
+```{r}
+columnas_a_eliminar <- c(
     "workclass",
     "education",
     "marital_status",
@@ -61,24 +72,26 @@ testing_dummies <- fastDummies::dummy_cols(testing)%>%
     "relationship",
     "race",
     "sex",
-    "native_country"
-  ))
+    "native_country",
+    "salario"
+  )
+
+training_dummies <- fastDummies::dummy_cols(training)%>%
+  select(-columnas_a_eliminar)
+
+
+
+testing_dummies <- fastDummies::dummy_cols(testing)%>%
+  select(-columnas_a_eliminar)
 ```
 
+Genero la prediccion
+
 ```{r}
-train_sin_clase <- training_dummies %>% select(-c("salario"))
-train_labels <- training_dummies %>% 
-  select(salario)%>%
-  mutate(salario=factor(salario))
-
-test_sin_clase <- testing_dummies %>% select(-c("salario"))
-
-predicion <- knn(train=train_sin_clase, test=test_sin_clase, cl=train_labels$salario, k=5)
+predicted_labels <- knn(train=training_dummies, test=testing_dummies, cl=train_labels, k=5)
 ```
 
 ## Prueba con todos los datos
 ```{r}
-real_labels <- testing_dummies$salario
-
-confusionMatrix(table(predicion, real_labels))
+confusionMatrix(table(predicted_labels, test_labels))
 ```
