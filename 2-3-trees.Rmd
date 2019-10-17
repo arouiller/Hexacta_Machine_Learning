@@ -1,0 +1,108 @@
+---
+title: "Arboles de decision"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Arboles de decision
+
+
+```{r}
+rm(list=ls())
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(caret)
+library(rpart)
+library(rpart.plot)
+library(tidyverse)
+```
+
+### Cargo los datos de training y testing
+
+```{r}
+training <- read.csv("data/adult_train.csv", stringsAsFactors = TRUE)
+colnames(training) <- c("age", "workclass", "final_weight", "education",
+                           "education_number", "marital_status", "occupation",
+                           "relationship", "race", "sex", "capital_gain",
+                           "capital_loss", "hours_per_week", "native_country",
+                           "salario")
+
+testing <- read.csv("data/adult_train.csv")
+
+colnames(testing) <- c("age", "workclass", "final_weight", "education",
+                           "education_number", "marital_status", "occupation",
+                           "relationship", "race", "sex", "capital_gain",
+                           "capital_loss", "hours_per_week", "native_country",
+                           "salario")
+```
+
+## Generamos el modelo con valores por defecto
+```{r}
+fit <- rpart(salario~., data = training, method = 'class')
+rpart.plot(fit, extra = 106)
+```
+
+### Probamos el modelo
+```{r}
+real_labels <- testing$salario
+predict_labels <- predict(fit, testing, type = 'class')
+
+confusionMatrix(table(predict_labels, real_labels))
+```
+### Realizaremos grid search con algunos valores
+
+```{r}
+gs <- list(minsplit = c(2, 5, 10),
+           maxdepth = c(1, 3, 5),
+           cp = c(0.01, 0.1, 0.001)) %>% 
+  cross_d() # Convert to data frame grid
+gs
+```
+
+```{r}
+mod <- function(...) {
+  rpart(salario~., data = training, method = 'class', control = rpart.control(...))
+}
+
+gs <- gs %>% mutate(fit = pmap(gs, mod))
+gs
+```
+```{r}
+compute_accuracy <- function(fit, test_features, test_labels) {
+  predicted <- predict(fit, test_features, type = "class")
+  mean(predicted == test_labels)
+}
+```
+
+```{r}
+test_features <- testing %>% select(-salario)
+test_labels   <- testing$salario
+gs <- gs %>%
+  mutate(test_accuracy = map_dbl(fit, compute_accuracy,
+                                 test_features, test_labels))
+```
+
+```{r}
+gs <- gs %>% arrange(desc(test_accuracy), desc(minsplit), maxdepth)
+gs
+```
+
+```{r, fig.height = 10, fig.width = 10, fig.align = "center"}
+control = rpart.control(minbucket = 10, maxdepth = 5, cp = 0.001)
+fit <- rpart(salario~., data = training, method = 'class', control = control)
+rpart.plot(fit, extra = 106)
+```
+
+### Probamos el modelo
+```{r}
+real_labels <- testing$salario
+predict_labels <- predict(fit, testing, type = 'class')
+
+confusionMatrix(table(predict_labels, real_labels))
+```

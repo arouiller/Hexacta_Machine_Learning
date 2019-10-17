@@ -1,0 +1,68 @@
+---
+title: "Sistemas de recomendacion"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r}
+rm(list = ls())
+```
+
+```{r}
+m<- matrix(
+    c(
+      1, 2, 3, 4, 5, 0 ,
+      3, 4, 2, 1, 4, -5 ,
+      5, 4, 3, 2, 0, -1,
+      0, 0, 5, -4, 3, 0,
+      5, 5, 4, 4, 0, 0, 
+      -5, 4, 0, 4, 5, 0,
+      0, 3, -1, 0, 0, 0
+      ), 
+    byrow = T, 
+    ncol=6, 
+    dimnames = list(
+      c(
+        'Alejandro', 
+        'Mariano', 
+        'Matias',
+        'Andres',
+        'Jose',
+        'Pedro',
+        'Roberto'
+      ), c(
+        'Banana', 
+        'Pera', 
+        'Manzana', 
+        'Kiwi',
+        'Naranja',
+        'Sandia'
+      )))
+
+m
+```
+
+```{r}
+sort(m[c('Roberto'), ], decreasing = T)
+```
+
+
+```{r}
+item_nro <- 'Banana'
+
+(item_index <- which(colnames(m) ==  item_nro))
+
+cosine_sim <- function(a, b) crossprod(a,b)/sqrt(crossprod(a)*crossprod(b))
+
+cos_sims <- apply(m, 2,
+                    FUN = function(y) 
+                      cosine_sim(m[,item_index], y))
+
+sort(cos_sims, decreasing = T)
+```
+

@@ -1,0 +1,111 @@
+---
+title: "K means"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+rm(list=ls())
+```
+
+
+## R Markdown
+```{r}
+#install.packages("animation")
+library(animation)
+library(dplyr)
+library(ggbiplot)
+library(datasets)
+```
+
+```{r}
+data(iris)
+
+dataset <- iris%>%select(Sepal.Length, Petal.Width)
+
+kmeans.ani(dataset, centers = 3)
+```
+
+
+```{r}
+df <- iris%>%select(-c(Species))
+iris.pca <- prcomp(df, center = TRUE,scale. = TRUE)
+
+summary(iris.pca)
+
+ggbiplot(iris.pca, obs.scale = 1, var.scale = 1, groups = iris$Species, ellipse = TRUE, circle = F, var.axes = F)
+
+```
+
+```{r}
+numero_clases <- 3
+
+kmean_resultado <- kmeans(df, numero_clases, iter.max = 500, nstart = 1)
+
+ggbiplot(iris.pca, obs.scale = 1, var.scale = 1, groups = factor(kmean_resultado$cluster), ellipse = TRUE, circle = F, var.axes = F)
+```
+
+
+
+### Cargo los datos de training y testing
+
+```{r}
+library(fastDummies)
+
+col_names <- c("age", "workclass", "final_weight", "education",
+                           "education_number", "marital_status", "occupation",
+                           "relationship", "race", "sex", "capital_gain",
+                           "capital_loss", "hours_per_week", "native_country",
+                           "salario")
+
+categorical_cols <- c("workclass", "education", "marital_status", "occupation",
+                           "relationship", "race", "sex", "native_country"
+                           )
+
+training <- read.csv("data/adult_train.csv", stringsAsFactors = TRUE)
+colnames(training) <- col_names
+
+training_dummies <- dummy_cols(training, select_columns = categorical_cols, remove_first_dummy = T)%>%
+  select(-c(
+    "workclass",
+    "education",
+    "marital_status",
+    "occupation",
+    "relationship",
+    "race",
+    "sex",
+    "native_country"
+  ))
+
+testing <- read.csv("data/adult_test.csv")
+
+colnames(testing) <- col_names
+testing_dummies <- fastDummies::dummy_cols(testing, select_columns = categorical_cols, remove_first_dummy = T)%>%
+  select(-c(
+    "workclass",
+    "education",
+    "marital_status",
+    "occupation",
+    "relationship",
+    "race",
+    "sex",
+    "native_country"
+  ))
+```
+
+```{r}
+
+numero_clases <- 4
+
+train_sin_clase <- training_dummies %>% select(-c("salario"))
+
+kmean_resultado <- kmeans(train_sin_clase, numero_clases, iter.max = 100, nstart = 1)
+
+resultado <- train_sin_clase
+resultado$clase <- kmean_resultado$cluster
+```
+
+

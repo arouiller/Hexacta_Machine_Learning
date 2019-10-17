@@ -1,0 +1,845 @@
+---
+title: "Presentacion 1"
+output: 
+  html_document:
+    df_print: kable
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::knit_meta(class=NULL, clean = TRUE)
+```
+
+```{r}
+my_kable = function(x, max.rows=10, ...) {
+  kable(x[1:max.rows, ], ...)
+}
+```
+
+```{r}
+rm(list=ls())
+```
+
+```{r}
+#install.packages("dplyr")
+## Librería para manipulación de datos
+library(dplyr)
+
+#install.packages("ggplot2")
+## Librería para generación de gráficos
+library(ggplot2)
+#install.packages("gridExtra")
+## Librería para colocar varios gráficos, previamente generados, en un mismo canvas
+library(gridExtra)
+#install.packages("plotly")
+## Librería para interactuar con gráficos
+library(plotly)
+
+#install.packages("fastDummies")
+## Librería para gernerar variables dummies a partir de una variable categórica
+library(fastDummies)
+
+#install.packages("MASS")
+## Support Functions and Datasets for Venables and Ripley's MASS
+library(MASS)
+
+#install.packages("aucm")
+## Implements methods for identifying linear and nonlinear marker combinations that maximizes the Area Under the AUC Curve (AUC).
+library(aucm)
+```
+
+
+## Funciones básicas
+
+### Asignación de valores a variables
+```{r}
+a <- 1
+b <- 3
+c <- b + a
+a
+b
+c
+```
+
+### Creación de vectores
+```{r}
+c1 <- c('Marcela', 'Juliana', 'PamelX', 'Pablo')
+c2 <- c('Femenino', 'Indefinido', 'Femenino', 'Masculino')
+c3 <- c(25, 38, 47, 39)
+
+c1
+c2
+c3
+```
+
+### Función str
+La función str permite conocer la estructura de los datos.
+Cada tipo de dato tendrá una salida diferente.
+```{r}
+a <- 1
+str(a)
+
+b <- "Hola mundo"
+str(b)
+
+c <- c(1,2,3,4)
+str(c)
+
+d <- c('Femenino', 'Indefinido', 'Femenino', 'Masculino')
+str(d)
+
+e <- matrix(1:9, nrow = 3, ncol = 3)
+str(e)
+
+
+f <- data.frame(Sexo=d, value=c)
+str(f)
+
+
+```
+
+### Funcion summary
+Sirve para mostrar un resumen de la información del dato a analizar.
+Al igual que str, la salida depende del tipo de dato que se está analizando.
+```{r}
+b <- c(1,2,3,4)
+summary(b)
+
+aux <- c('Femenino', 'Indefinido', 'Femenino', 'Masculino')
+summary(aux)
+```
+
+### Función head y tail
+Las funciones head y tail son utilizadas con datos que contienen colecciones y su objetivo es devolver los N primeros (o ultimos) elementos
+```{r}
+vector1 <- seq(1, 9)
+vector2 <- seq(11, 100, 4)
+vector3 <- seq(100, 1000, 89)
+vector <- c(vector1, vector2, vector3)
+vector
+```
+```{r}
+head(vector,5)
+```
+```{r}
+tail(vector, 6)
+```
+
+### Algunas funciones estadísticas
+Media
+```{r}
+mean(vector)
+```
+Mediana
+```{r}
+median(vector)
+```
+Desviación estándar
+```{r}
+sd(vector)
+```
+
+
+## Dataframes
+
+### Operaciones básicas
+
+#### Creación de dataframes a partir de vectores
+```{r}
+c1 <- c('Marcela', 'Juliana', 'PamelX', 'Pablo')
+c2 <- c('Femenino', 'Indefinido', 'Femenino', 'Masculino')
+c3 <- c(25, 38, 47, 39)
+
+df <- data.frame(Nombre=c1, Genero=c2, Edad=c3)
+
+str(df)
+```
+
+```{r}
+summary(df)
+```
+
+#### Lectura de un dataframe desde un archivo
+```{r}
+data <- read.csv("data/adult.data")
+colnames(data) <- c(
+    'age','workclass','fnlwgt','education','educationnum','maritalstatus','occupation','relationship','race','sex','capitalgain','capitalloss','hoursperweek','nativecountry','incomelevel'
+)
+
+str(data)
+```
+
+```{r}
+summary(data)
+```
+
+### Acceso a los elementos
+
+Solo la primer fila
+```{r}
+data[1,]
+```
+
+Un rango de filas
+```{r}
+data[1:10, ]
+```
+
+Un conjunto determinado de filas
+```{r}
+filas_a_ver <- c(1,2,3,7,11,13,17, 19)
+data[filas_a_ver, ]
+```
+
+Solo una columna
+```{r}
+resultado <- data[, 5]
+str(resultado)
+head(resultado, 10)
+```
+
+Un rango de columnas
+```{r}
+resultado <- data[, 5:7]
+str(resultado)
+head(resultado, 10)
+```
+
+Un conjunto de columnas
+```{r}
+columnas <- c(1,2,3,7)
+resultado <- data[, columnas]
+str(resultado)
+head(resultado, 10)
+```
+
+Acceso a las columnas por nombre
+```{r}
+columnas_a_ver <- c("age", "occupation", "sex")
+resultado <- data[,columnas_a_ver]
+str(resultado)
+head(resultado, 10)
+```
+
+Un conjunto de columnas por indice
+```{r}
+columnas_a_ver <- c(1,7,11)
+resultado <- data[,columnas_a_ver]
+str(resultado)
+head(resultado, 10)
+```
+
+
+Mezclamos todo!!!!
+```{r}
+rows <- c(1,3,5, 100:105)
+cols <- c(1, 7, 13)
+
+data[rows, cols]
+```
+
+## Operaciones con dataframes
+
+### Ordenamiento
+
+```{r}
+orden_por_education_age <- order(data$educationnum, data$age, decreasing = c(F, T))
+head(orden_por_education_age, 20)
+str(orden_por_education_age)
+```
+
+```{r}
+resultado <- data[orden_por_education_age, ]
+head(resultado, 10)
+```
+
+### Eliminación de columnas
+
+Haciendo nula la columna
+```{r}
+str(data)
+data$fnlwgt  <- NULL
+cat("\n")
+str(data)
+```
+
+A través del paso de un vector
+```{r}
+borrar <- c("hoursperweek", "capitalgain", "capitalloss", "educationnum")
+data_2 <- data[,!(names(data) %in% borrar)]
+
+str(data_2)
+```
+
+Especificar las columnas que quiero dejar
+```{r}
+mantener <- c("age", "race", "sex")
+data_3 <- data[, mantener]
+
+str(data_3)
+```
+
+
+### Filtrado de datos
+
+```{r}
+head(data$sex == ' Male', 20)
+```
+
+
+```{r}
+#filtro <- data$sex == ' Male'
+head(
+  data[data$sex == ' Male', ], 
+  30)
+```
+
+### Uso de apply
+```{r}
+data$medida_ridicula <- apply(data[,c('hoursperweek', 'age')], 1, function(x)x['hoursperweek']*x['age'])
+summary(data)
+```
+
+
+## Dplyr
+```{r}
+#library(dplyr)
+```
+
+### Select
+Paso directo
+```{r}
+head(
+  dplyr::select(data, sex, age, occupation)
+  ,30)
+```
+
+
+Paso por vector
+```{r}
+columnas <- c("sex", "age", "occupation")
+head(dplyr::select(data, columnas), 30)
+```
+
+### Filter
+
+```{r}
+head(filter(data, age>=70), 30)
+```
+
+```{r}
+head(filter(data, age>=70 & educationnum == 9), 30)
+```
+
+```{r}
+head(
+filter(data, age>=mean(age, na.rm=TRUE)*2),
+30)
+```
+
+### Arrange
+
+```{r}
+head(arrange(data, desc(age)), 30)
+```
+
+```{r}
+head(arrange(data, desc(age), educationnum), 30)
+```
+
+### Mutate
+```{r}
+head(mutate(data, medida_absurda = (age + hoursperweek)/educationnum), 30)
+```
+
+### Summarise
+```{r}
+summarise(
+  data,
+  Cantidad = n(),
+  Edad_Media = mean(age, na.rm=T),
+  Edad_mediana = median(age, na.rm = T), 
+  Edad_desviacion = sd(age, na.rm = T)
+)
+```
+
+### Group by
+```{r}
+summarise(
+  group_by(
+    data,
+    educationnum
+  ),
+  Cantidad = n(),
+  Edad_Media = mean(age, na.rm=T),
+  Edad_mediana = median(age, na.rm = T), 
+  Edad_desviacion = sd(age, na.rm = T)
+)
+```
+
+
+### A poner todo junto
+```{r}
+head(
+arrange(mutate(group_by(dplyr::select(data, age, workclass, sex, hoursperweek), sex), cantidad_por_sexo = n(), hoursperweek_per_sex=sum(hoursperweek)), desc(hoursperweek))
+,30)
+```
+
+### A mejorar la legibilidad
+```{r}
+head(
+arrange(
+    mutate(
+        group_by(
+            dplyr::select(
+                data, 
+                age, workclass, sex, hoursperweek
+            ), 
+            sex
+        ), 
+        cantidad_por_sexo = n(), 
+        hoursperweek_per_sex=sum(hoursperweek)
+    ), 
+    desc(hoursperweek)
+)
+,30)
+```
+
+### El operador pipe
+
+```{r}
+head(
+data%>%
+dplyr::select(age, workclass, sex, hoursperweek)%>%
+    group_by(sex)%>%
+    mutate(
+        cantidad_por_sexo = n(), 
+        hoursperweek_per_sex=sum(hoursperweek)
+    )%>%
+    arrange(desc(hoursperweek))
+,30)
+```
+
+### Rotacion
+```{r}
+df_pequenio <- data[1:5, 1:5]
+df_pequenio
+```
+```{r}
+df_t <- data.frame(t(df_pequenio))
+df_t
+```
+
+## Graficos
+```{r}
+#library(ggplot2)
+```
+
+### Scatter plot
+```{r}
+ggplot(data = data) +
+  geom_point(mapping = aes(x = age, y = hoursperweek, color=sex))
+```
+
+```{r}
+ggplot(data = data) +
+  geom_point(mapping = aes(x = age, y = hoursperweek, colour=sex)) +
+  facet_wrap(~ sex, ncol = 2)
+```
+
+
+### Graficos de barras
+```{r}
+data %>%
+mutate(Pclass = factor(relationship))%>%
+ggplot() +
+  geom_bar(mapping = aes(x = relationship, colour=relationship, fill=relationship))
+```
+
+```{r}
+data %>%
+mutate(relationship = factor(relationship))%>%
+group_by(relationship)%>%
+summarise(cantidad = n())%>%
+ggplot() +
+    geom_bar(mapping = aes (x=relationship, colour=relationship, fill=relationship, y=cantidad), stat='Identity')
+```
+
+```{r}
+data %>%
+mutate(relationship = factor(relationship))%>%
+group_by(relationship)%>%
+summarise(cantidad = n())%>%
+ggplot() +
+    geom_bar(mapping = aes (x=reorder(relationship, -cantidad), colour=relationship, fill=relationship, y=cantidad), stat='Identity')
+```
+
+### Grafico de lineas
+```{r}
+data %>%
+dplyr::select(age)%>%
+filter(!is.na(age))%>%
+group_by(age)%>%
+summarise(cantidad = n())%>%
+ggplot()+
+geom_line(mapping = aes(x = age, y = cantidad)) 
+```
+
+### Histograma
+```{r}
+data %>%
+  dplyr::select (age, sex)%>%
+  ggplot(aes(x=age)) + 
+  geom_histogram()
+```
+
+```{r}
+data %>%
+  dplyr::select (age, sex)%>%
+  ggplot(aes(x=age)) + 
+  geom_histogram(color="darkblue", fill="lightblue")
+```
+
+```{r}
+data %>%
+  dplyr::select (age, sex)%>%
+  ggplot(aes(x=age)) + 
+  geom_histogram(color="darkblue", fill="lightblue")+
+  facet_wrap(~ sex, ncol = 2)
+```
+
+```{r}
+data %>%
+  dplyr::select (age, sex)%>%
+  ggplot(aes(x=age)) + 
+  geom_histogram(color="darkblue", fill="lightblue", binwidth=1)+
+  facet_wrap(~ sex, ncol = 2)
+```
+
+
+```{r}
+data %>%
+  dplyr::select (age, sex)%>%
+  ggplot(aes(x=age)) + 
+  geom_histogram(breaks=seq(0, 100, 10), color="darkblue", fill="lightblue")+
+  stat_bin(breaks=seq(0, 100, 10), geom="text", aes(label=..count..), vjust=-0.5)+
+  facet_wrap(~ sex, ncol = 2)
+```
+
+```{r}
+
+data %>%
+  dplyr::select (age, sex)%>%
+  ggplot(aes(x=age)) + 
+  geom_histogram(breaks=seq(0, 100, 10), color="darkblue", fill="lightblue")+
+  stat_bin(breaks=seq(0, 100, 10), geom="text", aes(label=..count..), vjust=-0.5)+
+  scale_x_continuous(breaks = seq(0, 100, 10))+
+  facet_wrap(~ sex, ncol = 2)
+```
+
+
+```{r}
+data$age_interval <- cut(data$age, seq(0, 100, by=10))
+
+data %>%
+  dplyr::select (age_interval, sex)%>%
+  ggplot(aes(x=age_interval)) + 
+  geom_histogram(color="darkblue", fill="lightblue",stat = "count")+
+  facet_wrap(~ sex, ncol = 2)
+```
+
+### Mapa de calor
+```{r}
+data %>%
+dplyr::select(age_interval, relationship)%>%
+group_by(age_interval, relationship)%>%
+summarise(cantidad=n())%>%
+ggplot(aes(y=age_interval, x=relationship, fill=cantidad))+ 
+geom_tile(NULL)+
+scale_fill_gradient(low="steelblue", high="red")
+```
+
+
+### Grafico de cajas
+```{r}
+data %>%
+dplyr::select(age, sex)%>%
+ggplot()+
+stat_boxplot(geom ='errorbar', aes(y=age, x=sex)) +
+scale_y_continuous(breaks = seq(0, 100, 10))+
+geom_boxplot(aes(y=age, x=sex))
+```
+
+### Grafico de violin (o de vela)
+
+```{r}
+data %>%
+dplyr::select(age, sex, )%>%
+ggplot(aes(x=sex, y=age))+
+  geom_violin()
+```
+
+```{r}
+data %>%
+dplyr::select(age, sex, )%>%
+ggplot(aes(x=sex, y=age, color=sex, fill=sex))+
+  geom_violin()
+```
+
+
+## Transformación de datos
+
+### One-hot encoding
+```{r}
+#library(fastDummies)
+
+set.seed(1986)
+perros <- 
+  data.frame(
+    id = 1:15,
+    peso = round(rnorm(n = 15, mean = 2000, sd = 250), 1),
+    alto  = round(rnorm(n = 15, mean = 30, sd = 10), 1), 
+    raza = sample(x = c("akita", "beagle", "collie"), size = 15, 
+                     replace = TRUE),
+    vac = sample(x = c("alfa", "beta"), size = 15, replace = TRUE)
+  )
+
+summary(perros)
+
+```
+```{r}
+dummy_cols(perros,  select_columns = c("raza"))
+```
+
+
+```{r}
+dummy_cols(perros,  select_columns = c("raza"), remove_first_dummy = T)
+```
+
+### Box-Cox
+```{r}
+#library(MASS)
+#library(aucm)
+
+
+data("bupa")
+colnames(bupa)[colnames(bupa) == "V3"] <- "ALT"
+colnames(bupa)[colnames(bupa) == "V5"] <- "gammaGT"
+
+ggplot(data = bupa, aes(x = log(gammaGT) , y = ALT)) +
+  geom_point(color = "firebrick") +
+  geom_smooth(method = "lm", se = FALSE, color = "black") +
+  labs(title = "ALT ~ log(gammaGT)") +
+  theme_bw() +  theme(plot.title = element_text(hjust = 0.5))
+```
+```{r}
+par(mfrow = c(1,2))
+boxcox(ALT ~ log(gammaGT), lambda = -2:2, data = bupa)
+#Se repite el proceso pero esta vez entrechando el rango de valores de lambda 
+boxcox(ALT ~ log(gammaGT), lambda = seq(-0.5, 0.5, 0.1), data = bupa)
+```
+
+```{r}
+ggplot(data = bupa, aes(x = log(gammaGT) , y = log(ALT))) +
+  geom_point(color = "firebrick") +
+  geom_smooth(method = "lm", se = FALSE, color = "black") +
+  labs(title = "ALT ~ log(gammaGT)") +
+  theme_bw() +  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+## Valores extremos univariados
+```{r}
+age_sex_not_na <- data %>% filter(!is.na(age)) %>% arrange(age)
+edades_masculinos <- age_sex_not_na%>%filter(sex==' Male')
+#uso de 
+edades_femeninos <- age_sex_not_na%>%filter(sex==' Female')
+
+#una funcion que toma un vector de edades y devuelve los límites para los outliers y los outliers severos
+posicion_outliers <- function(dataset, field){
+    #longitud del vector de edades
+    l <- nrow(dataset)
+    #posición del primer cuartil
+    q1 <- floor(1/4*l)
+    #posicion del segundo cuartil
+    q2 <- floor(1/2*l)
+    #posicion del tercer cuartil
+    q3 <- floor(3/4*l)
+
+    #Edades correspondientes a cada cuartil
+    qe <- dataset[c(q1, q2, q3),c(field)]
+
+    #Rango intercuartilico
+    ric <- qe[3]-qe[1]
+
+    #limites para los outliers
+    limites <- c(
+        qe[1]-3*ric,
+        qe[1]-1.5*ric,
+        qe[3]+1.5*ric,
+        qe[3]+3*ric
+    )
+    
+    limites
+}
+
+#Identifico los limites para los outliers
+of <- edades_femeninos %>% posicion_outliers('age')
+om <- edades_masculinos %>% posicion_outliers('age')
+
+#Marcamos cada registro
+edades_femeninos <- edades_femeninos %>%
+    mutate(
+        clase = case_when(
+            age < of[1] ~ 'OSI',
+            age < of[2] ~ 'OI',
+            age > of[4] ~ 'OSS',
+            age > of[3] ~ 'OS',
+            TRUE ~ 'NO'
+        )
+    )
+
+edades_masculinos <- edades_masculinos %>%
+    mutate(
+        clase = case_when(
+            age < om[1] ~ 'OSI',
+            age < om[2] ~ 'OI',
+            age > om[4] ~ 'OSS',
+            age > om[3] ~ 'OS',
+            TRUE ~ 'NO'
+        )
+    )
+
+data_4 <- merge(edades_masculinos, edades_femeninos, all=T)
+of
+om
+```
+
+```{r}
+data_4%>%
+  dplyr::select(age, sex, clase)%>%
+  ggplot()+
+  geom_jitter(aes(y=age, x=sex, colour=clase), width=0.3, height=0.1, alpha=0.12)+
+  stat_boxplot(geom ='errorbar', aes(y=age, x=sex), alpha=0.5) +
+  geom_boxplot(aes(y=age, x=sex, colour=NA), alpha=0.5)
+```
+
+## Valores extremos multivariados
+```{r}
+data(diamonds)
+df <- sample_frac(diamonds, 1)
+head(df)
+```
+
+```{r}
+columnas <- c(1, 5, 7)
+
+#Calculamos la distancia de mahalanobis
+MD <- mahalanobis(df[, columnas], colMeans(df[, columnas]), cov(df[, columnas]))
+```
+
+```{r}
+df$MD <- round(MD, 3)
+head(df)
+```
+
+```{r}
+outlier <- df$MD > 10
+
+df$outlier_maha <- outlier
+```
+
+```{r}
+#library(plotly)
+
+pal <- c("green")
+df2 <- filter(df, !outlier_maha)
+
+plot_ly(x=df2$carat, y=df2$depth, z=df2$price, type="scatter3d", mode="markers", color=df2$outlier_maha, colors = pal)
+```
+```{r}
+pal <- c("green", "red")
+
+plot_ly(x=df$carat, y=df$depth, z=df$price, type="scatter3d", mode="markers", color=df$outlier_maha, colors = pal)
+```
+
+
+
+## Una probadita de lo que viene
+
+### Regresión lineal
+```{r}
+#install.packages("datarium")
+data("marketing", package = "datarium")
+head(marketing, 4)
+```
+
+
+```{r}
+ggplot(marketing, aes(x = youtube, y = sales)) +
+  geom_point()
+```
+
+```{r}
+cor(marketing$sales, marketing$youtube)
+```
+
+```{r}
+model <- lm(sales ~ youtube, data = marketing)
+model
+```
+
+```{r}
+ggplot(marketing, aes(youtube, sales)) +
+  geom_point() +
+  stat_smooth(method = lm)
+```
+
+### Analisis lineal discriminante
+```{r}
+#library(MASS)
+
+data("iris")
+# Fit the model
+model <- lda(Species~., data = iris)
+
+model
+```
+
+```{r}
+pal <- c("green", "red", "blue")
+
+plot_ly(
+  x=iris$Petal.Length, 
+  y=iris$Sepal.Width, 
+  z=iris$Sepal.Length, 
+  type="scatter3d", 
+  mode="markers", 
+  color=iris$Species, 
+  colors = pal
+)
+```
+
+
+
+```{r}
+#library(gridExtra)
+
+prediction <- predict(model)
+
+lda.data <- cbind(iris, prediction$x)
+lda.data$prediccion <- prediction$class
+
+g1 <- ggplot(lda.data, aes(LD1, LD2)) +
+  geom_point(aes(color = Species))
+
+g2 <- ggplot(lda.data, aes(LD1, LD2)) +
+  geom_point(aes(color = prediccion))
+
+grid.arrange(g1, g2, nrow = 2)
+```
+
+
+
+
+

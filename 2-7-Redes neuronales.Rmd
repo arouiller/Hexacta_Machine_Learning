@@ -1,0 +1,137 @@
+---
+title: "recomendacion"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r}
+rm(list=ls())
+```
+
+
+```{r}
+#install.packages("keras")
+#library(keras)
+#install_keras()
+library(keras)
+```
+
+### Cargo los datos de training y testing
+
+```{r}
+col_names <- c("age", "workclass", "final_weight", "education",
+                           "education_number", "marital_status", "occupation",
+                           "relationship", "race", "sex", "capital_gain",
+                           "capital_loss", "hours_per_week", "native_country",
+                           "salario")
+
+categorical_cols <- c("workclass", "education", "marital_status", "occupation",
+                           "relationship", "race", "sex", "native_country"
+                           )
+
+training <- read.csv("data/adult_train.csv", stringsAsFactors = TRUE)
+colnames(training) <- col_names
+
+training_dummies <- dummy_cols(training, select_columns = categorical_cols, remove_first_dummy = F)%>%
+  select(-c(
+    "workclass",
+    "education",
+    "marital_status",
+    "occupation",
+    "relationship",
+    "race",
+    "sex",
+    "native_country"
+  ))
+
+testing <- read.csv("data/adult_test.csv")
+
+colnames(testing) <- col_names
+testing_dummies <- fastDummies::dummy_cols(testing, select_columns = categorical_cols, remove_first_dummy = F)%>%
+  select(-c(
+    "workclass",
+    "education",
+    "marital_status",
+    "occupation",
+    "relationship",
+    "race",
+    "sex",
+    "native_country"
+  ))
+
+colnames(testing_dummies) <- gsub(" ","_", colnames(testing_dummies))
+colnames(testing_dummies) <- gsub("-","_", colnames(testing_dummies))
+
+colnames(training_dummies) <- gsub(" ","_", colnames(training_dummies))
+colnames(training_dummies) <- gsub("-","_", colnames(training_dummies))
+```
+
+
+```{r}
+train_data <- training_dummies%>%select(-c(salario))
+test_data <- testing_dummies%>%select(-c(salario))
+
+train_data <- scale(train_data) 
+
+col_means_train <- attr(train_data, "scaled:center") 
+col_stddevs_train <- attr(train_data, "scaled:scale")
+test_data <- scale(test_data, center = col_means_train, scale = col_stddevs_train)
+```
+
+```{r}
+train_labels <- to_categorical(ifelse(training_dummies$salario == '<=50K', 1, 0))
+train_labels[1:10] # Display first 10 entries
+
+test_labels <- ifelse(testing_dummies$salario == '<=50K', 1, 0)
+test_labels[1:10]
+```
+
+
+```{r}
+build_model <- function() {
+  
+  model <- keras_model_sequential() %>%
+    layer_dense(units = 256, activation = 'relu', input_shape = ncol(train_data)) %>% 
+    layer_dropout(rate = 0.4) %>% 
+    layer_dense(units = 128, activation = 'relu') %>%
+    layer_dropout(rate = 0.3) %>%
+    layer_dense(units = 2, activation = "softmax")
+  
+  model %>% compile(
+    loss = "binary_crossentropy",
+    optimizer = "adam",
+    metrics = list("accuracy")
+  )
+  
+  model
+}
+
+model <- build_model()
+model %>% summary()
+```
+
+```{r}
+history <- model %>% fit(
+  train_data, train_labels, 
+  epochs = 10, 
+  batch_size = 5,
+  validation_split = 0.3
+)
+```
+
+```{r}
+plot_(model)
+```
+
+
+```{r}
+predictions <- model %>% predict_classes(test_data)
+
+confusionMatrix(table(predictions, test_labels))
+```
+

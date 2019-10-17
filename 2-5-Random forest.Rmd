@@ -1,0 +1,59 @@
+---
+title: "Random forest"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## RAndom forest
+https://www.r-bloggers.com/how-to-implement-random-forests-in-r/
+
+```{r}
+rm(list=ls())
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(caret)
+#install.packages("randomForest")
+library(randomForest)
+```
+
+### Cargo los datos de training y testing
+
+```{r}
+training <- read.csv("data/adult_train.csv", stringsAsFactors = TRUE)
+colnames(training) <- c("age", "workclass", "final_weight", "education",
+                           "education_number", "marital_status", "occupation",
+                           "relationship", "race", "sex", "capital_gain",
+                           "capital_loss", "hours_per_week", "native_country",
+                           "salario")
+
+testing <- read.csv("data/adult_test.csv")
+
+colnames(testing) <- c("age", "workclass", "final_weight", "education",
+                           "education_number", "marital_status", "occupation",
+                           "relationship", "race", "sex", "capital_gain",
+                           "capital_loss", "hours_per_week", "native_country",
+                           "salario")
+```
+
+## Generamos el modelo con valores por defecto
+```{r}
+fit <- randomForest(salario~., data = training, importance=TRUE)
+
+importance(fit)
+varImpPlot(fit)
+
+```
+
+### Probamos el modelo
+```{r}
+real_labels <- testing$salario
+predict_labels <- predict(fit, testing, type = 'class')
+
+confusionMatrix(table(predict_labels, real_labels))
+```

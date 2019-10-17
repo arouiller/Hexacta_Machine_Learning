@@ -1,0 +1,141 @@
+---
+title: "Limpieza de datos"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+rm(list= ls())
+```
+
+
+```{r}
+library(tidyverse)
+```
+
+## Limpieza de datos
+
+### Asignacion de nombres a columnas
+```{r}
+# Datos de train.
+datos_train <- read_csv(file = "data/adult_.data", col_names = FALSE)
+colnames(datos_train) <- c("age", "workclass", "final_weight", "education",
+                           "education_number", "marital_status", "occupation",
+                           "relationship", "race", "sex", "capital_gain",
+                           "capital_loss", "hours_per_week", "native_country",
+                           "salario")
+
+# Datos de test.
+datos_test <- read_csv(file = "data/adult_.test", col_names = FALSE, skip = 1)
+colnames(datos_test) <- c("age", "workclass", "final_weight", "education",
+                           "education_number", "marital_status", "occupation",
+                           "relationship", "race", "sex", "capital_gain",
+                           "capital_loss", "hours_per_week", "native_country",
+                           "salario")
+
+# Se combinan los dos conjuntos de datos.
+datos <- bind_rows(datos_train, datos_test)
+
+# Se eliminan registros con missing values, que en este set de datos están 
+# codificados como ?.
+remplazar <- function(x){
+  x[x == "?"] <- NA
+  return(x)
+}
+datos <- datos %>% map_df(.f = remplazar)
+datos <- drop_na(datos)
+
+# Recodificación de niveles.
+datos <- datos %>% mutate(workclass = recode(datos$workclass,
+                                             "Without-pay" = "desempleado",
+                                             "Self-emp-inc" = "autonomo",
+                                             "Self-emp-not-inc" = "autonomo",
+                                             "Federal-gov" = "funcionario",
+                                             "Local-gov" = "funcionario",
+                                             "State-gov" = "funcionario"))
+
+datos <- datos %>% mutate(marital_status = recode(datos$marital_status,
+                                             "Married-AF-spouse"    = "casado",
+                                             "Married-civ-spouse"   = "casado",
+                                             "Married-spouse-absent"= "casado",
+                                             "Widowed"              = "separado",
+                                             "Never-married"        = "soltero",
+                                             "Separated"            = "separado",
+                                             "Divorced"             = "separado")
+                          )
+
+datos <- datos %>% mutate(sex = recode(datos$sex,
+                                             "Male"    = "Masculino",
+                                             "Female"   = "Femenino")
+                          )
+
+norte_america <- c("Canada", "Cuba", "Dominican-Republic", "El-Salvador",
+                   "Guatemala", "Haiti", "Honduras", "Jamaica", "Mexico",
+                   "Nicaragua", "Outlying-US(Guam-USVI-etc)", "Puerto-Rico",
+                   "Trinadad&Tobago", "United-States")
+europa        <- c("England", "France", "Germany", "Greece", "Holand-Netherlands",
+                   "Hungary", "Ireland", "Italy", "Poland", "Portugal", "Scotland",
+                   "Yugoslavia")
+asia          <- c("Cambodia", "China", "Hong", "India", "Iran", "Japan", "Laos",
+                    "Philippines", "Taiwan", "Thailand", "Vietnam")
+sud_america   <- c("Columbia", "Ecuador", "Peru")
+otros         <- c("South")
+
+datos <- datos %>% mutate(native_country = case_when(
+                          native_country %in% norte_america ~ "Norte America",
+                          native_country %in% asia          ~ "Asia",
+                          native_country %in% sud_america   ~ "Sud America",
+                          native_country %in% europa        ~ "Europa",
+                          native_country %in% otros         ~ "Otros",
+                          TRUE ~ as.character(native_country)
+                ))
+
+
+primaria     <- c("Preschool", "1st-4th", "5th-6th", "7th-8th", "9th", "10th",
+                  "11th","12th")
+bachillerato <- c("Some-college", "Assoc-acdm", "Assoc-voc")
+master       <- c("Masters", "Prof-school")
+
+datos <- datos %>% mutate(education = case_when(
+                          education %in% primaria      ~ "primaria",
+                          education == "HS-grad"       ~ "secundaria",
+                          education %in% bachillerato  ~ "bachillerato",
+                          education == "Bachelors"     ~ "universidad",
+                          education %in% master        ~ "master",
+                          education == "Doctorate"     ~ "doctorado",
+                          TRUE ~ as.character(education)
+                ))
+
+datos <- datos %>% mutate(salario = case_when(
+                          salario == "<=50K."      ~ "<=50K",
+                          salario == ">50K."       ~ ">50K",
+                          TRUE ~ as.character(salario)
+                ))
+
+# Se agrupan las observaciones cuya variable occupation == "Armed-Forces" con 
+# "Other-service" ya que solo hay 14 observaciones (0.03% del total).
+datos <- datos %>% mutate(occupation = case_when(
+                          occupation == "Armed-Forces" ~ "Other-service",
+                          TRUE ~ as.character(occupation)
+                         ))
+write_csv(x = datos, path = "data/adult_custom.csv", col_names = TRUE)
+```
+```{r}
+#If you do not have an ID per row, use the following code to create an ID
+datos <- datos %>% mutate(id = row_number())
+#Check IDs
+head(datos$id)
+#Create training set
+train <- datos %>% sample_frac(.70)
+#Create test set
+test  <- anti_join(datos, train, by = 'id')
+
+
+
+write_csv(x = train%>%select(-c("id")), path = "data/adult_train.csv", col_names = TRUE)
+write_csv(x = test%>%select(-c("id")), path = "data/adult_test.csv", col_names = TRUE)
+```
+

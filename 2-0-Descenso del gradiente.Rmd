@@ -1,0 +1,130 @@
+---
+title: "Descenso del gradiente"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+rm(list=ls())
+```
+
+
+## Descenso del gradiente
+
+http://ethen8181.github.io/machine-learning/linear_regression/linear_regession.html
+
+### Librerias
+```{r}
+library(grid)
+library(dplyr)
+library(scales)
+library(ggplot2)
+```
+
+### Parabola
+```{r}
+Formula <- function(x) 1.2 * (x-2)^2 + 3.2
+```
+
+
+### Visualizacion
+Se ve la forma de la parábola y la solución óptima
+```{r}
+ggplot( data.frame( x = c(0, 4) ), aes(x) ) + 
+  stat_function(fun = Formula) + 
+  geom_point( data = data.frame( x = 2, y = Formula(2) ), aes(x, y),  color = "blue", size = 3 ) + 
+  ggtitle( expression( 1.2 * (x-2)^2 + 3.2 ) )
+```
+
+
+### Funcion deriavada
+```{r}
+#Derivada de la funcion
+derivada <- function(x) 2 * 1.2 * (x-2) 
+```
+
+
+
+```{r}
+decenso_gradiente <- function(learning_rate = 0.5){
+  # generamos una lista para guardar los pares x, y
+  xtrace <- list()
+  ytrace <- list()
+  
+  # tasa de aprendizaje
+  learning_rate_ <- learning_rate
+  
+  # epsilon y maxima cantidad de pasos permitidos
+  epsilon <- .000065
+  step <- 1
+  iteration <- 50
+  
+  x_new <- 4#runif(1, -1, 1)
+  x_old <- -x_new
+  
+  xtrace[[step]] <- x_new
+  ytrace[[step]] <- Formula(x_new) 
+  
+  
+  while( abs(x_new - x_old) > epsilon & step <= iteration )
+  {
+      # update iteration count 
+      step <- step + 1    
+      
+      # gradient descent
+      x_old <- x_new
+      x_new <- x_old - learning_rate_ * derivada(x_old)
+      
+      # record keeping 
+      xtrace[[step]] <- x_new
+      ytrace[[step]] <- Formula(x_new)    
+  }
+  
+  # create the data points' dataframe
+  record <- data.frame( x = do.call(rbind, xtrace), y = do.call(rbind, ytrace) )
+  
+  # Crear un segmento entre cada punto (cada paso del gradiente)
+  
+  segment <- data.frame( x = double(), y = double(), xend = double(), yend = double() )
+  for( i in 1:( nrow(record)-1 ) ) {
+      segment[ i, ] <- cbind( record[i, ], record[i + 1, ] )
+  }
+  
+  #for( i in 1:5 ) {
+  #    segment[ i, ] <- cbind( record[i, ], record[i + 1, ] )
+  #}
+  
+  # visualize the gradient descent's value 
+  ggplot( data.frame( x = c(0, 4) ), aes(x) ) + 
+  stat_function(fun = Formula) + 
+  ggtitle( expression( 1.2 * (x-2)^2 + 3.2 ) ) + 
+  geom_segment( data = segment , aes(x = x, y = y, xend = xend, yend = yend), 
+                color = "blue", alpha = .8, arrow = arrow( length = unit(0.25, "cm") ) )+
+  geom_point( data = data.frame( x = 2, y = Formula(2) ), aes(x, y),  color = "blue", size = 3 )+
+  geom_point( data = data.frame( x = 4, y = Formula(4) ), aes(x, y),  color = "red", size = 3 )
+}
+```
+
+```{r}
+decenso_gradiente(learning_rate = 0.25)
+```
+
+```{r}
+decenso_gradiente(learning_rate = 0.4)
+```
+
+```{r}
+decenso_gradiente(learning_rate = 0.5)
+```
+
+```{r}
+decenso_gradiente(learning_rate = 0.85)
+```
+
+```{r}
+decenso_gradiente(learning_rate = 0.025)
+```
+

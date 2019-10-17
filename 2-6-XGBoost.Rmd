@@ -1,0 +1,147 @@
+---
+title: "XGBoost"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## XGBoost
+https://rpubs.com/dalekube/XGBoost-Iris-Classification-Example-in-R
+https://www.analyticsvidhya.com/blog/2016/01/xgboost-algorithm-easy-steps/
+
+```{r}
+rm(list=ls())
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(caret)
+#install.packages("xgboost")
+library(xgboost)
+#install.packages("fastDummies")
+library(fastDummies)
+```
+
+### Cargo los datos de training y testing
+
+```{r}
+col_names <- c("age", "workclass", "final_weight", "education",
+                           "education_number", "marital_status", "occupation",
+                           "relationship", "race", "sex", "capital_gain",
+                           "capital_loss", "hours_per_week", "native_country",
+                           "salario")
+
+categorical_cols <- c("workclass", "education", "marital_status", "occupation",
+                           "relationship", "race", "sex", "native_country"
+                           )
+
+training <- read.csv("data/adult_train.csv", stringsAsFactors = TRUE)
+colnames(training) <- col_names
+
+training_dummies <- dummy_cols(training, select_columns = categorical_cols, remove_first_dummy = F)%>%
+  select(-c(
+    "workclass",
+    "education",
+    "marital_status",
+    "occupation",
+    "relationship",
+    "race",
+    "sex",
+    "native_country"
+  ))
+
+testing <- read.csv("data/adult_test.csv")
+
+colnames(testing) <- col_names
+testing_dummies <- fastDummies::dummy_cols(testing, select_columns = categorical_cols, remove_first_dummy = F)%>%
+  select(-c(
+    "workclass",
+    "education",
+    "marital_status",
+    "occupation",
+    "relationship",
+    "race",
+    "sex",
+    "native_country"
+  ))
+```
+
+## Binarizamos las respuestas
+```{r}
+
+training_dummies <- training_dummies %>%
+  mutate(
+    salario_bin = ifelse(salario == '<=50K', 1, 0)
+  )%>%
+  select(-c(salario))
+
+testing_dummies <- testing_dummies %>%
+  mutate(
+    salario_bin = ifelse(salario == '<=50K', 1, 0)
+  )%>%
+  select(-c(salario))
+```
+
+### 
+```{r}
+train.label <- training_dummies$salario_bin
+xgb.train = xgb.DMatrix(data=data.matrix(training_dummies%>%select(-c(salario_bin))),label=train.label)
+
+test.label <- testing_dummies$salario_bin
+xgb.test = xgb.DMatrix(data=data.matrix(testing_dummies%>%select(-c(salario_bin))),label=test.label)
+
+```
+
+
+### Parametros
+```{r}
+num_class = 2
+params = list(
+  booster="gbtree",
+  eta=0.001,
+  max_depth=5,
+  gamma=3,
+  subsample=0.75,
+  colsample_bytree=1,
+  objective="multi:softprob",
+  eval_metric="mlogloss",
+  num_class=num_class
+)
+```
+
+### Entrenamiento
+```{r}
+# Train the XGBoost classifer
+xgb.fit=xgb.train(
+  params=params,
+  data=xgb.train,
+  nrounds=25,
+  nthreads=13,
+  early_stopping_rounds=10,
+  watchlist=list(val1=xgb.train,val2=xgb.test),
+  verbose=1
+)
+
+# Review the final model and results
+xgb.fit
+```
+### Testing
+```{r}
+xgb.pred = predict(xgb.fit,xgb.test, reshape = T)
+xgb.pred = as.data.frame(xgb.pred)
+colnames(xgb.pred) <- c('class_1', 'class_0')
+```
+
+
+```{r}
+xgb.pred <- xgb.pred %>%
+  mutate(
+    class = ifelse(class_0 > 0.5, 1, 0)
+  )
+
+
+confusionMatrix(table(xgb.pred$class, testing_dummies$salario_bin))
+```

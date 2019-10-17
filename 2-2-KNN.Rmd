@@ -1,0 +1,84 @@
+---
+title: "K-nearest Neighbors"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 2-2 KNN
+
+https://towardsdatascience.com/k-nearest-neighbors-algorithm-with-examples-in-r-simply-explained-knn-1f2c88da405c
+
+```{r}
+rm(list=ls())
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(caret)
+library(class)
+```
+
+
+### Cargo los datos de training y testing
+
+```{r}
+training <- read.csv("data/adult_train.csv", stringsAsFactors = TRUE)
+colnames(training) <- c("age", "workclass", "final_weight", "education",
+                           "education_number", "marital_status", "occupation",
+                           "relationship", "race", "sex", "capital_gain",
+                           "capital_loss", "hours_per_week", "native_country",
+                           "salario")
+
+training_dummies <- fastDummies::dummy_cols(training)%>%
+  select(-c(
+    "workclass",
+    "education",
+    "marital_status",
+    "occupation",
+    "relationship",
+    "race",
+    "sex",
+    "native_country"
+  ))
+
+testing <- read.csv("data/adult_train.csv")
+
+colnames(testing) <- c("age", "workclass", "final_weight", "education",
+                           "education_number", "marital_status", "occupation",
+                           "relationship", "race", "sex", "capital_gain",
+                           "capital_loss", "hours_per_week", "native_country",
+                           "salario")
+testing_dummies <- fastDummies::dummy_cols(testing)%>%
+  select(-c(
+    "workclass",
+    "education",
+    "marital_status",
+    "occupation",
+    "relationship",
+    "race",
+    "sex",
+    "native_country"
+  ))
+```
+
+```{r}
+train_sin_clase <- training_dummies %>% select(-c("salario"))
+train_labels <- training_dummies %>% 
+  select(salario)%>%
+  mutate(salario=factor(salario))
+
+test_sin_clase <- testing_dummies %>% select(-c("salario"))
+
+predicion <- knn(train=train_sin_clase, test=test_sin_clase, cl=train_labels$salario, k=5)
+```
+
+## Prueba con todos los datos
+```{r}
+real_labels <- testing_dummies$salario
+
+confusionMatrix(table(predicion, real_labels))
+```
